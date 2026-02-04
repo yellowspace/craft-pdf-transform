@@ -94,6 +94,11 @@ class PdfTransformService extends Component
 
      }
 
+     $sourceVolumes = $this->settings->sourceVolumes;
+     if (!empty($sourceVolumes) && !in_array($asset->volumeId, $sourceVolumes)) {
+         return null;
+     }
+
      return $this->pdfToImage(
        $asset
      );

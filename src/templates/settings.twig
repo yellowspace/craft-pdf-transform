@@ -23,6 +23,15 @@
     })
 }}
 
+{{ forms.checkboxSelectField({
+    label: 'Source Volumes',
+    instructions: 'Select the source volumes that should trigger image generation for PDFs.',
+    id: 'sourceVolumes',
+    name: 'sourceVolumes',
+    values: settings['sourceVolumes'],
+    options: volumes
+}) }}
+
 {{ forms.textField({
     label: 'Image Resolution',
     id: 'imageResolution',

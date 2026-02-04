@@ -111,8 +111,12 @@ class PdfTransform extends Plugin
 
                if ($element instanceof \craft\elements\Asset) {
                   if ($event->isNew && $element->extension === 'pdf') {
-                    // @TODO: trigger the imageToPdf function
-                    PdfTransform::$plugin->pdfTransformService->pdfToImage($element);
+                    $settings = PdfTransform::$plugin->getSettings();
+                    $sourceVolumes = $settings->sourceVolumes;
+
+                    if (empty($sourceVolumes) || in_array($element->volumeId, $sourceVolumes)) {
+                        PdfTransform::$plugin->pdfTransformService->pdfToImage($element);
+                    }
                  }
                }
 

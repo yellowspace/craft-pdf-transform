@@ -28,6 +28,7 @@ class Settings extends Model
      */
     public $page = 1;
     public $imageVolume = null;
+    public $sourceVolumes = [];
     public $imageFormat = 'jpg';
     public $imageResolution = 72;
     public $imageQuality = 100;
@@ -42,7 +43,8 @@ class Settings extends Model
     {
         return [
             [['page', 'imageVolume', 'imageResolution', 'imageQuality'], 'integer'],
-            ['imageFormat', 'string']
+            ['imageFormat', 'string'],
+            ['sourceVolumes', 'safe']
         ];
     }
 }
