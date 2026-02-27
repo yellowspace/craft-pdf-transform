@@ -23,6 +23,15 @@
     })
 }}
 
+{{ forms.textField({
+    label: 'Output Image Subpath',
+    instructions: 'Optional subfolder path inside the output volume (e.g. previews/pdfs). Leave empty to store in the volume root.',
+    id: 'imageSubpath',
+    name: 'imageSubpath',
+    value: settings['imageSubpath'] ?? ''
+    })
+}}
+
 {{ forms.checkboxSelectField({
     label: 'Source Volumes',
     instructions: 'Select the source volumes that should trigger image generation for PDFs.',

@@ -76,17 +76,48 @@ class PdfTransformService extends Component
       return $asset->filename . '-' . $asset->id . '.' . $this->settings->imageFormat;
    }
 
+   private function getImageSubpath(): string
+   {
+     $subpath = trim((string)$this->settings->imageSubpath);
+     return trim($subpath, "/\\");
+   }
+
+   private function getOutputFolder()
+   {
+     $volume = $this->getImageVolume();
+     $subpath = $this->getImageSubpath();
+
+     if ($subpath === '') {
+       return Craft::$app->getAssets()->getRootFolderByVolumeId($volume->id);
+     }
+
+     return Craft::$app->getAssets()->ensureFolderByFullPathAndVolume($subpath, $volume, false);
+   }
+
+   private function getOutputPath(string $filename): string
+   {
+     $subpath = $this->getImageSubpath();
+     if ($subpath === '') {
+       return $filename;
+     }
+
+     return $subpath . '/' . $filename;
+   }
+
    public function render($asset)
    {
 
     $volume = $this->getImageVolume();
      $fs = $this->getImageFs();
      $fileName = $this->getFileName($asset);
+     $folder = $this->getOutputFolder();
+     $outputPath = $this->getOutputPath($fileName);
 
-     if ($fs->fileExists($fileName)) {
+     if ($fs->fileExists($outputPath)) {
        
        $transformedAsset = Asset::find()
          ->volumeId($volume->id)
+         ->folderId($folder->id)
          ->filename($fileName)
          ->one();
 
@@ -117,7 +148,7 @@ class PdfTransformService extends Component
 
      $tempPathTransform = $pathService->getTempPath(true) . '/' . $filename;
 
-     $folder = Craft::$app->getAssets()->getRootFolderByVolumeId($volume->id);
+     $folder = $this->getOutputFolder();
 
      $pdf = new Pdf($tempPath);
 
