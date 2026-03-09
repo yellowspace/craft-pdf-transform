@@ -136,7 +136,7 @@ class PdfTransformService extends Component
 
    }
 
-   public function pdfToImage($asset)
+   public function pdfToImageBAK($asset)
    {
 
      $filename = $this->getFileName($asset);
@@ -175,8 +175,68 @@ class PdfTransformService extends Component
        {
          return $assetTransformed;
        }
-
-
    }
+
+    public function pdfToImage($asset)
+    {
+        $filename = $this->getFileName($asset);
+        $volume = $this->getImageVolume();
+
+        $pathService = Craft::$app->getPath();
+        $tempPath = $pathService->getTempPath(true) . '/' . mt_rand(0, 9999999) . '.png';
+        file_put_contents($tempPath, file_get_contents($asset->url));
+
+        $tempPathTransform = $pathService->getTempPath(true) . '/' . $filename;
+        $folder = $this->getOutputFolder();
+
+        $pdf = new Pdf($tempPath);
+        $pdf->setPage($this->settings->page)
+            ->setResolution($this->settings->imageResolution)
+            ->setCompressionQuality($this->settings->imageQuality);
+
+        // 1. Get the Imagick object instead of calling saveImage()
+        $imagick = $pdf->getImageData($tempPathTransform);
+
+        // 2. Apply ICC Profiles if the source is CMYK
+        if ($imagick->getImageColorspace() == \Imagick::COLORSPACE_CMYK) {
+            $srgbProfile = '/usr/share/color/icc/colord/sRGB.icc';
+            $cmykProfile = '/usr/share/color/icc/colord/FOGRA39L_coated.icc';
+
+            // Apply input profile (CMYK)
+            if (file_exists($cmykProfile)) {
+                $imagick->profileImage('icc', file_get_contents($cmykProfile));
+            }
+
+            // Apply output profile (sRGB)
+            if (file_exists($srgbProfile)) {
+                $imagick->profileImage('icc', file_get_contents($srgbProfile));
+            }
+
+            // Finalize colorspace
+            $imagick->transformImageColorspace(\Imagick::COLORSPACE_SRGB);
+        }
+
+        // 3. Manually save the modified image
+        $imagick->writeImage($tempPathTransform);
+
+        // Rest of the existing Craft Asset saving logic...
+        $assetTransformed = new Asset();
+        $assetTransformed->tempFilePath = $tempPathTransform;
+        $assetTransformed->filename = $filename;
+        $assetTransformed->folderId = $folder->id;
+        $assetTransformed->newFolderId = $folder->id;
+        $assetTransformed->kind = 'Image';
+        $assetTransformed->title = $asset->title;
+        $assetTransformed->avoidFilenameConflicts = true;
+        $assetTransformed->setVolumeId($volume->id);
+        $assetTransformed->setScenario(Asset::SCENARIO_CREATE);
+
+        $assetTransformed->validate();
+
+        if (Craft::$app->getElements()->saveElement($assetTransformed, false))
+        {
+            return $assetTransformed;
+        }
+    }
 
 }
